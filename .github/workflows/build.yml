@@ -1,0 +1,29 @@
+name: Build Windows VST3
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find project folder
+        id: find
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem -Recurse -Filter CMakeLists.txt | Sort-Object { $_.FullName.Length } | Select-Object -First 1
+          "dir=$($f.DirectoryName)" >> $env:GITHUB_OUTPUT
+          Write-Host "Project: $($f.DirectoryName)"
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S "${{ steps.find.outputs.dir }}" -B build -A x64
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build --config Release --target KWEQLab_VST3
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: KW-EQ-Lab-VST3-win64
+          path: build/KWEQLab_artefacts/Release/VST3/
